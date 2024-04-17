@@ -4,11 +4,12 @@ import os
 from chromadb import HttpClient
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
-client = OpenAI(api_key="___")
-openai_ef = OpenAIEmbeddingFunction(api_key="___", model_name="text-embedding-3-small")
+api_key = ""
+client = OpenAI(api_key)
+openai_ef = OpenAIEmbeddingFunction(api_key, model_name="text-embedding-3-small")
 
 client = HttpClient()
-collection = client.get_or_create_collection("business", embedding_function=openai_ef, metadata={"hnsw:space": "cosine"})
+collection = client.get_or_create_collection("business", embedding_function=openai_ef)
 
 for filepath in glob.glob("data/*.tmp"):
     filename = os.path.basename(filepath)
