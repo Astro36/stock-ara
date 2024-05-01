@@ -5,10 +5,9 @@ from chromadb import HttpClient
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 api_key = ""
-client = OpenAI(api_key)
-openai_ef = OpenAIEmbeddingFunction(api_key, model_name="text-embedding-3-small")
 
 client = HttpClient()
+openai_ef = OpenAIEmbeddingFunction(api_key, model_name="text-embedding-3-small")
 collection = client.get_or_create_collection("business", embedding_function=openai_ef)
 
 for filepath in glob.glob("data/*.tmp"):

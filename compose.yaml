@@ -1,0 +1,25 @@
+services:
+  db:
+    build:
+      context: ./db
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${APP_ID}
+      - POSTGRES_DB=${APP_ID}
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    secrets:
+      - db-password
+    restart: always
+
+volumes:
+  db-data:
+
+secrets:
+  db-password:
+    file: ./db/password.txt
