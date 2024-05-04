@@ -53,6 +53,7 @@ def is_relevant_business(query_text, business_report):
         f"Business report: {business_report[:2000]}",
         f"Query: f{query_text}",
     )
+    print(business_summary)
     answer = request_openai_gpt_answer(
         """You are a corporate analyst. Read the given business summary and answer "True" or "False" whether the company is matched the given query.""",
         f"Query: f{query_text}",
@@ -66,9 +67,9 @@ def is_relevant_business(query_text, business_report):
 def find_company_by_business(query_text):
     print("query_text", query_text)
     business_text = request_openai_gpt_answer(
-        "You are a corporate analyst. Translate the given query into a sentence about what this company does, as in the example. Print only answer.",
+        "You are a corporate analyst. Translate the given query into a English sentence about what this company does in detailed, as in the example. Print only answer.",
         query_text,
-        "Example:\nQ: 무기 만드는 회사를 찾아줘\nA: The company sells defensive weapons.\n\nQ: 반도체와 관련된 회사를 알려줘\nA: The company's main products are semiconductors.\n\nQ: 원자력 발전소를 건설하는 회사\nA: The company builds nuclear power plants.\n\nQ: 이차전지 양극재를 만드는 회사\nA: This company manufactures secondary battery cathode materials.",
+        "Example:\nQ: 무기 만드는 회사를 찾아줘\nA: The company sells defensive weapons.\n\nQ: 반도체와 관련된 회사를 알려줘\nA: The company's main products are semiconductors.\n\nQ: 원자력 발전소를 건설하는 회사\nA: The company builds nuclear power plants.\n\nQ: 이차전지 양극재를 만드는 회사\nA: This company manufactures secondary battery cathode materials.\n\nQ: 면역항암제\n: This company's main products are cancer immunotherapies.\n\n: 물류: This company is logistics company.",
     )
     print("business_text", business_text)
     business_embedding = request_openai_embedding(business_text)
@@ -94,12 +95,15 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query_text:
         await update.message.reply_text("사업보고서를 조회하고 있습니다. 잠시만 기다려주세요(30초).")
         (business, companies) = find_company_by_business(update.message.text)
-        answer = []
-        for asset_id, reason in companies:
-            (_, symbol, name, _, _) = find_asset_by_id(asset_id)
-            answer.append(f"<b>{name}({symbol})</b>\n{reason}")
-        answer = "\n\n".join(answer)
-        await update.message.reply_text(f"<i>Query: {business}</i>\n\n{answer}", parse_mode="HTML")
+        if len(companies) > 0:
+            answer = []
+            for asset_id, reason in companies:
+                (_, symbol, name, _, _) = find_asset_by_id(asset_id)
+                answer.append(f"<b>{name}({symbol})</b>\n{reason}")
+            answer = "\n\n".join(answer)
+            await update.message.reply_text(f"<i>Query: {business}</i>\n\n{answer}\n\n검색결과가 만족스럽지 않다면 영어로 검색해주세요.", parse_mode="HTML")
+        else:
+            await update.message.reply_text(f"<i>Query: {business}</i>\n\n관련 기업이 없습니다. 검색결과가 만족스럽지 않다면 영어로 검색해주세요.", parse_mode="HTML")
     else:
         await update.message.reply_text(
             "<code>/search 반도체 장비 회사</code>와 같이 찾으려는 기업이 영위하는 사업을 알려주세요.",
