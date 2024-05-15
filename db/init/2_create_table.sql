@@ -4,9 +4,9 @@ CREATE TABLE assets (
     name     text                  NOT NULL,
     currency character(3)          NOT NULL,
     type     character varying(20) NOT NULL,
-    UNIQUE(symbol, exchange)
+    UNIQUE(symbol)
 );
-CREATE INDEX ix_asset_symbol ON assets (symbol, exchange);
+CREATE INDEX ix_asset_symbol ON assets (symbol);
 
 CREATE TABLE asset_prices (
     date     date           NOT NULL,
