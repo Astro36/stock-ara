@@ -18,7 +18,7 @@ def request_openai_gpt_answer(system, user, assistant):
             {"role": "user", "content": user},
             {"role": "assistant", "content": assistant},
         ],
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
     )
     return response.choices[0].message.content.strip()
 
@@ -118,15 +118,15 @@ def calculate_beta(asset_ids):
 # === LLM ===
 def is_relevant_business(query_text, business_report):
     business_summary = request_openai_gpt_answer(
-        "You are a corporate analyst. Read the given business report and summarize the business in English by focusing on the parts that match the given query. Write only one sentence.",
-        f"Business report: {business_report[:2000]}",
+        "You are a corporate analyst. Read the given business report, extract the parts relevant to the given query in Korean. Write only one sentence.",
         f"Query: f{query_text}",
+        f"Business report: {business_report[:2000]}",
     )
     print(business_summary)
     answer = request_openai_gpt_answer(
-        """You are a corporate analyst. Read the given business summary and answer "True" or "False" whether the company is matched the given query.""",
+        """You are a corporate analyst. Read the given business report summary and answer "True" or "False" whether the company is relevant to the given query.""",
         f"Query: f{query_text}",
-        f"Business summary: {business_summary}",
+        f"Business report summary: {business_summary}",
     )
     if "true" in answer.lower():
         return (True, business_summary)
@@ -136,7 +136,7 @@ def is_relevant_business(query_text, business_report):
 def find_company_by_business(query_text):
     print("query_text", query_text)
     business_text = request_openai_gpt_answer(
-        "You are a corporate analyst. Translate the given query into a English sentence about what this company does in detailed, as in the example. Print only answer.",
+        "You are a corporate analyst. Translate the given query into an English sentence about what this company does in detailed, as in the example. Print only answer.",
         query_text,
         "Example:\nQ: 무기 만드는 회사를 찾아줘\nA: The company sells defensive weapons.\n\nQ: 반도체와 관련된 회사를 알려줘\nA: The company's main products are semiconductors.\n\nQ: 원자력 발전소를 건설하는 회사\nA: The company builds nuclear power plants.\n\nQ: 이차전지 양극재를 만드는 회사\nA: This company manufactures secondary battery cathode materials.\n\nQ: 면역항암제\n: This company's main products are cancer immunotherapies.\n\n: 물류: This company is logistics company.",
     )
@@ -146,9 +146,9 @@ def find_company_by_business(query_text):
         "Example:\nQ: The company manufactures equipment used for the back-end processes of semiconductor production.\nA: Semiconductor back-end process.\n\nQ: This company is involved in the cosmetics industry.\nA: Cosmetics",
     )
     business_description_text = request_openai_gpt_answer(
-        "Explain in 100 characters or less. Print only answer.",
+        "Describe the given keyword in 100 characters or less. Print only answer.",
         business_keyword,
-        "Example:\nQ: What is the semiconductor back-end process.\nA: The semiconductor back-end process involves assembly and testing of chips after wafer fabrication.",
+        "Example:\nQ: Semiconductor back-end process.\nA: The semiconductor back-end process involves assembly and testing of chips after wafer fabrication.",
     )
     business_text = business_text + " " + business_description_text  # CoT
     print("business_text", business_text)
