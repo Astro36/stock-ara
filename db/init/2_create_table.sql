@@ -24,8 +24,9 @@ CREATE TABLE companies (
     id                 serial  PRIMARY KEY,
     name               text    NOT NULL,
     listed_asset_id    integer REFERENCES assets,
+    outstanding_shares bigint,
     business_summary   text,
-    business_detail    text,
+    business_raw       text,
     business_embedding vector(1536)
 );
-CREATE INDEX ix_company_name ON companies (name);
+CREATE INDEX ix_company_asset_id ON companies (listed_asset_id);
