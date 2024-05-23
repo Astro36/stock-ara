@@ -1,4 +1,11 @@
 services:
+  bot:
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env
+
   db:
     build:
       context: ./db

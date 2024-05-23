@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY . /code/
 
-CMD ["python", "-m", "stock_ainalyst.main"]
+# CMD ["python", "-m", "stock_ainalyst.bot"]
