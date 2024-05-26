@@ -5,7 +5,7 @@ import os
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-def request_gpt_answer(messages, model="gpt-4o"):
+def request_gpt_answer(messages, model="gpt-3.5-turbo"):
     response = openai_client.chat.completions.create(
         messages=[
             {"role": "system" if idx == 0 else ("user" if idx % 2 else "assistant"), "content": content}

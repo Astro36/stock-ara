@@ -1,8 +1,7 @@
 from dotenv import load_dotenv
 import os
-from stock_ainalyst import db
+from stock_ainalyst import db, quant
 from stock_ainalyst.llm import rag
-from stock_ainalyst.quant import portfolio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -30,7 +29,7 @@ async def search_business(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("사업보고서를 조회하고 있습니다. 잠시만 기다려주세요(30초).")
         (business, companies) = rag.find_company_by_business(query_text)
         if len(companies) > 0:
-            market_expected_returns = portfolio.market_expected_returns()
+            market_expected_returns = quant.market_expected_returns()
             market_expected_returns.sort_values(ascending=False, inplace=True)
 
             betas = db.calculate_beta([asset_id for asset_id, _ in companies])
