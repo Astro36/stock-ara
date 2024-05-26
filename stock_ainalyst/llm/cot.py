@@ -6,9 +6,9 @@ def create_business_query(query):
         [
             "Translate the given query into an English sentence about what this company does in detailed, as in the example.",
             # Few-shot prompting
-            "무기 만드는 회사를 찾아줘",
-            "The company sells defensive weapons.",
-            "반도체와 관련된 회사를 알려줘",
+            "무기 만드는 회사",
+            "The company manufactures defensive weapons.",
+            "반도체와 관련된 회사",
             "This company is related to semiconductors.",
             "원자력 발전소를 건설하는 회사",
             "The company builds nuclear power plants.",

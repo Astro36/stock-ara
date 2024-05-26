@@ -1,4 +1,4 @@
-import os
+import pandas as pd
 import psycopg
 
 
@@ -54,6 +54,64 @@ def find_similar_price_trend_companies(asset_id):
         )
         res = cur.fetchall()
         return [row for row in res if row[1]]
+
+
+def get_weekly_market_prices():
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                time_bucket('1 week'::interval, date) AS week,
+                asset_id,
+                last(close, date) AS close
+            FROM asset_prices p
+            JOIN companies c ON p.asset_id = c.listed_asset_id
+            WHERE date > now() - '1 year'::interval AND c.outstanding_shares IS NOT NULL
+            GROUP BY week, asset_id
+            ORDER BY asset_id, week
+            """
+        )
+        res = cur.fetchall()
+        prices_dict = {}
+        for date, asset_id, price in res:
+            if asset_id in prices_dict:
+                prices_dict[asset_id].append((date, price))
+            else:
+                prices_dict[asset_id] = [(date, price)]
+        prices_df = []
+        for asset_id, prices in prices_dict.items():
+            prices_df.append(
+                pd.DataFrame(
+                    data=[price for _, price in prices],
+                    index=[date for date, _ in prices],
+                    columns=[asset_id],
+                    dtype=float,
+                )
+            )
+        return pd.concat(prices_df, axis=1)
+
+
+def get_market_caps():
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            WITH asset_prices_close AS (
+                SELECT
+                    asset_id,
+                    last(close, date) AS close
+                FROM asset_prices
+                GROUP BY asset_id
+            )
+            SELECT
+                asset_id,
+                close * outstanding_shares AS market_cap
+            FROM companies c JOIN asset_prices_close p on p.asset_id = c.listed_asset_id
+            WHERE outstanding_shares IS NOT NULL
+            ORDER BY market_cap DESC;
+            """
+        )
+        res = cur.fetchall()
+        return res
 
 
 def calculate_beta(asset_ids):
