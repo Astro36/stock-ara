@@ -1,12 +1,12 @@
 from dotenv import load_dotenv
 import os
-from stock_ainalyst import db, quant
-from stock_ainalyst.llm import rag
+from stock_ainalyst import db, function, quant
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 
 async def reply_text(update: Update, message: str):
+    print(message)
     texts = message.split("\n\n")
     text_out = ""
     for text in texts:
@@ -23,38 +23,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def search_business(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query_text = update.message.text.replace("/business", "").strip()
-    print(query_text)
-    if query_text:
+    query = update.message.text.replace("/business", "").strip()
+    print(query)
+    if query:
         await update.message.reply_text("사업보고서를 조회하고 있습니다. 잠시만 기다려주세요(30초).")
-        (business, companies) = rag.find_company_by_business(query_text)
-        if len(companies) > 0:
-            market_expected_returns = quant.market_expected_returns()
-            market_expected_returns.sort_values(ascending=False, inplace=True)
+        (business_query, answers) = function.find_companies_by_business(query)
+        if len(answers) > 0:
+            # market_expected_returns = quant.market_expected_returns()
+            # market_expected_returns.sort_values(ascending=False, inplace=True)
 
-            betas = db.calculate_beta([asset_id for asset_id, _ in companies])
-            sorted_companies = sorted(companies, key=lambda company: market_expected_returns[company[0]], reverse=True)
+            # betas = db.calculate_beta([asset_id for asset_id, _ in companies])
+            # sorted_companies = sorted(companies, key=lambda company: market_expected_returns[company[0]], reverse=True)
 
             answer = []
-            for asset_id, reason in sorted_companies:
+            for asset_id, reason, comment in answers:
                 (_, symbol, name, _, _) = db.find_asset_by_id(asset_id)
                 answer.append(
-                    f"<b>{name}({symbol})</b>\n{reason}\n52주 베타: {betas[asset_id]:.2f}, 시장기대수익률: {market_expected_returns[asset_id]*100:.2f}%"
+                    # f"<b>{name}({symbol})</b>\n{reason}\n52주 베타: {betas[asset_id]:.2f}, 시장기대수익률: {market_expected_returns[asset_id]*100:.2f}%"
+                    f"<b>{name}({symbol})</b>\n{reason}\n<blockquote>{comment}</blockquote>"
                 )
             answer = "\n\n".join(answer)
-            await reply_text(
-                update, f"<i>Query: {business}</i>\n\n{answer}\n\n검색결과가 만족스럽지 않다면 영어로 검색해주세요."
-            )
+            await reply_text(update, f"<i>Query: {business_query}</i>\n\n{answer}\n\n검색결과가 만족스럽지 않다면 영어로 검색해주세요.")
         else:
-            await update.message.reply_text(
-                f"<i>Query: {business}</i>\n\n관련 기업이 없습니다. 검색결과가 만족스럽지 않다면 영어로 검색해주세요.",
-                parse_mode="HTML",
-            )
+            await update.message.reply_text(f"<i>Query: {business_query}</i>\n\n관련 기업이 없습니다. 검색결과가 만족스럽지 않다면 영어로 검색해주세요.", parse_mode="HTML")
     else:
-        await update.message.reply_text(
-            "<code>/search 반도체 장비 회사</code>와 같이 찾으려는 기업이 영위하는 사업을 알려주세요.",
-            parse_mode="HTML",
-        )
+        await update.message.reply_text("<code>/search 반도체 장비 회사</code>와 같이 찾으려는 기업이 영위하는 사업을 알려주세요.", parse_mode="HTML")
 
 
 if __name__ == "__main__":

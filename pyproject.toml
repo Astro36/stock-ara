@@ -16,9 +16,10 @@ python-telegram-bot = "^21.2"
 requests = "^2.32.1"
 translators = "^5.9.2"
 yfinance = "^0.2.40"
+pgvector = "^0.2.5"
 
 [tool.black]
-line-length = 120
+line-length = 200
 
 [build-system]
 requires = ["poetry-core"]
