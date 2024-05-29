@@ -2,11 +2,11 @@ from dotenv import load_dotenv
 import os
 from stock_ainalyst import db
 from stock_ainalyst.function import command
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 
-async def reply_text(update: Update, message: str):
+async def reply_text(update: Update, message: str, reply_markup=None):
     texts = message.split("\n\n")
     text_out = ""
     for text in texts:
@@ -15,7 +15,7 @@ async def reply_text(update: Update, message: str):
             text_out = text + "\n\n"
         else:
             text_out += text + "\n\n"
-    await update.message.reply_text(text_out.strip(), parse_mode="HTML")
+    await update.message.reply_text(text_out.strip(), parse_mode="HTML", reply_markup=reply_markup)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -78,4 +78,4 @@ if __name__ == "__main__":
     # app.add_handler(CommandHandler("keyword", search_stock_by_keyword)) # 종목명, 선정이유
     app.add_handler(CommandHandler("analyze", analyze_stock)) # 종목명, 애널리스트 코멘트, 기대수익률
     # app.add_handler(CommandHandler("portfolio", make_portfolio)) # 기대수익률, 포트폴리오
-    app.run_polling()
+    app.run_polling(allowed_updates=Update.ALL_TYPES)

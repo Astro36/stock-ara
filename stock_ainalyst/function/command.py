@@ -1,5 +1,6 @@
 import redis
-from multiprocessing import Pool
+import multiprocessing as mp
+from queue import Queue
 from stock_ainalyst import db
 from stock_ainalyst.function import prompt, rag
 from stock_ainalyst.llm import openai, papago
@@ -21,41 +22,27 @@ def find_companies_by_business(query: str) -> tuple[str, list[tuple[str, str]]]:
     checked_asset_ids = set()
     answers = []
 
-    with Pool(10) as p:
-        while True:
-            if len(answers) >= 5 or len(checked_asset_ids) >= 20:
-                break
+    with mp.Pool(10) as p:
+        q = mp.Queue()
+        for asset_id in db.find_asset_ids_by_business(business_embedding):
+            q.put(asset_id)
 
-            similar_business_company_asset_ids = db.find_asset_ids_by_business(business_embedding)
-            similar_business_company_asset_ids = list(filter(lambda asset_id: asset_id not in checked_asset_ids, similar_business_company_asset_ids))
-            checked_asset_ids.update(similar_business_company_asset_ids)
-            print(similar_business_company_asset_ids)
+        while not q.empty() or len(answers) >= 5 or len(checked_asset_ids) >= 25:
+            x = []
+            for _ in range(10):
+                if not q.empty():
+                    x.append((q.get(), business_query))
+            result = p.map(fn, x)
+            checked_asset_ids.update([asset_id for asset_id, _ in x])
 
-            result = p.map(fn, [(id, business_query) for id in similar_business_company_asset_ids])
             for idx, (relevant, reason) in enumerate(result):
                 if relevant:
-                    asset_id = similar_business_company_asset_ids[idx]
                     answers.append((asset_id, papago.translate(reason)))
+                    asset_id, _ = x[idx]
 
-            if len(answers) >= 5 or len(checked_asset_ids) >= 20:
-                break
-
-            for idx, (relevant, reason) in enumerate(result):
-                if relevant:
-                    if len(answers) >= 5 or len(checked_asset_ids) >= 20:
-                        break
-
-                    asset_id = similar_business_company_asset_ids[idx]
-                    similar_price_trend_company_asset_ids = db.find_asset_ids_by_price_change_correlation(asset_id)
-                    similar_price_trend_company_asset_ids = list(filter(lambda asset_id: asset_id not in checked_asset_ids, similar_price_trend_company_asset_ids))
-                    checked_asset_ids.update(similar_price_trend_company_asset_ids)
-                    print(similar_price_trend_company_asset_ids)
-
-                    result2 = p.map(fn, [(id, business_query) for id in similar_price_trend_company_asset_ids])
-                    for idx2, (relevant2, reason2) in enumerate(result2):
-                        if relevant2:
-                            asset_id2 = similar_price_trend_company_asset_ids[idx2]
-                            answers.append((asset_id2, papago.translate(reason2)))
+                    for asset_id2 in db.find_asset_ids_by_price_change_correlation(asset_id):
+                        if asset_id2 not in checked_asset_ids:
+                            q.put(asset_id2)
 
     return (business_query, answers)
 
