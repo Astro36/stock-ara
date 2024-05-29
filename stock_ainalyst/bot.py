@@ -62,7 +62,7 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("애널리스트 리포트를 조회하고 있습니다. 잠시만 기다려주세요.")
         try:
             (symbol, stock_name, business_summary, comment, capm_expected_return, implied_expected_return) = command.analyze_stock(stock_name)
-            await reply_text(update, f"<b>{stock_name}({symbol})</b>\n{business_summary}\n<blockquote>{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}, 내재 기대수익률: {implied_expected_return*100:.2f}%")
+            await reply_text(update, f"<b>{stock_name}({symbol})</b>\n{business_summary}\n<blockquote>{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%")
         except:
             await update.message.reply_text("종목을 찾을 수 없습니다.", parse_mode="HTML")
     else:

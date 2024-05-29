@@ -27,7 +27,7 @@ def find_companies_by_business(query: str) -> tuple[str, list[tuple[str, str]]]:
         for asset_id in db.find_asset_ids_by_business(business_embedding):
             q.put(asset_id)
 
-        while not q.empty() or len(answers) >= 5 or len(checked_asset_ids) >= 25:
+        while not q.empty():
             x = []
             for _ in range(10):
                 if not q.empty():
@@ -43,6 +43,9 @@ def find_companies_by_business(query: str) -> tuple[str, list[tuple[str, str]]]:
                     for asset_id2 in db.find_asset_ids_by_price_change_correlation(asset_id):
                         if asset_id2 not in checked_asset_ids:
                             q.put(asset_id2)
+
+            if len(answers) >= 5 or len(checked_asset_ids) >= 25:
+                break
 
     return (business_query, answers)
 
