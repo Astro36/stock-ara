@@ -27,6 +27,16 @@ def find_company_by_asset_id(asset_id: int) -> tuple[int, str, int, int, str, st
         return res
 
 
+def find_company_by_name(name: str) -> tuple[int, str, int, int, str, str]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id, name, listed_asset_id, outstanding_shares, business_summary, business_detail FROM companies WHERE name = %s LIMIT 1;",
+            (name,),
+        )
+        res = cur.fetchone()
+        return res
+
+
 def find_asset_ids_by_business(embedding: list[float], limit=5) -> list[int]:
     with conn.cursor() as cur:
         cur.execute(
@@ -66,7 +76,7 @@ def find_asset_ids_by_price_change_correlation(asset_id, limit=5) -> list[int]:
         return [row[0] for row in res]
 
 
-def find_weekly_prices_by_asset_id(asset_id):
+def find_weekly_asset_prices_by_asset_id(asset_id):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -89,7 +99,7 @@ def find_weekly_prices_by_asset_id(asset_id):
         )
 
 
-def find_weekly_prices_by_market(market="KS"):
+def find_weekly_asset_prices_by_market(market="KS"):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -124,7 +134,7 @@ def find_weekly_prices_by_market(market="KS"):
         return pd.concat(prices_df, axis=1)
 
 
-def find_market_caps_by_market():
+def find_market_caps_by_market(market="KS"):
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -132,51 +142,17 @@ def find_market_caps_by_market():
                 SELECT
                     asset_id,
                     last(close, date) AS close
-                FROM asset_prices
+                FROM asset_prices p JOIN assets a ON a.id = p.asset_id
+                WHERE a.symbol LIKE %s
                 GROUP BY asset_id
             )
             SELECT
                 asset_id,
                 close * outstanding_shares AS market_cap
             FROM companies c JOIN asset_prices_close p on p.asset_id = c.listed_asset_id
-            WHERE outstanding_shares IS NOT NULL
             ORDER BY market_cap DESC;
-            """
-        )
-        res = cur.fetchall()
-        return res
-
-
-def calculate_beta(asset_ids):
-    with conn.cursor() as cur:
-        cur.execute(
-            f"""
-            WITH asset_price_weekly AS (
-                SELECT
-                    time_bucket('1 week'::interval, date) AS week,
-                    asset_id,
-                    close(candlestick_agg(date, close, volume)) AS close
-                FROM asset_prices
-                WHERE date > now() - '1 year'::interval
-                GROUP BY week, asset_id
-            ),
-            asset_price_changes AS (
-                SELECT week, asset_id, ((close / LAG(close) OVER (PARTITION BY asset_id ORDER BY week) - 1)) AS change
-                FROM asset_price_weekly
-            )
-            SELECT
-                pc1.asset_id,
-                slope(stats_agg(pc1.change, pc2.change)) AS beta
-            FROM asset_price_changes pc1
-            JOIN asset_price_changes pc2 ON pc2.asset_id = (
-                CASE WHEN (SELECT symbol FROM assets WHERE id = pc1.asset_id) LIKE '%%.KS' THEN (SELECT id FROM assets WHERE symbol = '^KS11')
-                    ELSE (SELECT id FROM assets WHERE symbol = '^KQ11')
-                END
-            ) AND pc1.week = pc2.week
-            WHERE pc1.asset_id IN ({",".join(map(str, asset_ids))})
-            GROUP BY pc1.asset_id
-            ORDER BY beta DESC;
             """,
+            (f"%.{market}",),
         )
         res = cur.fetchall()
-        return {asset_id: beta for asset_id, beta in res}
+        return pd.Series(data=[row[1] for row in res], index=[row[0] for row in res], dtype=float)

@@ -5,7 +5,6 @@ from stock_ainalyst.llm import openai
 
 
 def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]:
-    print("asset_id", asset_id)
     if (res := db.find_company_by_asset_id(asset_id)) is not None:
         (_, _, _, _, _, business_raw) = res
         business_summary = prompt.create_business_summary_from_query(business_query, business_raw)
@@ -22,6 +21,20 @@ def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]
     return (False, None)
 
 
+def summarize_company_business(asset_id: int) -> str:
+    if (res := db.find_company_by_asset_id(asset_id)) is not None:
+        (_, _, _, _, _, business_raw) = res
+        business_summary = openai.request_gpt_answer(
+            [
+                "Read the given business report excerpt and summarize it in an English sentence of 300 characters or less, focusing on the company's specific business details that can distinguish it from other companies, such as product name and sales proportion. Don't write about market and company forecasts.",
+                f'Business report: """{business_raw[:2000]}"""',
+            ],
+            model="gpt-4o",
+        )
+        return business_summary
+    return None
+
+
 def summarize_analysts_comments(asset_id: int) -> str:
     comments = naver.fetch_analysts_comments(asset_id)
     if len(comments) >= 1:
@@ -32,4 +45,4 @@ def summarize_analysts_comments(asset_id: int) -> str:
             ],
         )
         return answer
-    return ""
+    return "애널리스트 의견없음"

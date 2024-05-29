@@ -13,6 +13,7 @@ pandas = "^2.2.2"
 psycopg = {extras = ["binary"], version = "^3.1.19"}
 python-dotenv = "^1.0.1"
 python-telegram-bot = "^21.2"
+redis = "^5.0.4"
 requests = "^2.32.1"
 translators = "^5.9.2"
 yfinance = "^0.2.40"

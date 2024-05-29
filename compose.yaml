@@ -3,6 +3,7 @@ services:
     build: .
     depends_on:
       - db
+      - redis
     env_file:
       - .env
 
@@ -22,6 +23,12 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d:ro
     secrets:
       - db-password
+    restart: always
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
     restart: always
 
 volumes:
