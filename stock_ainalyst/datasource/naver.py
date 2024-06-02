@@ -3,8 +3,7 @@ import requests
 from stock_ainalyst import db
 
 
-def fetch_analysts_comments(asset_id: int) -> list[str]:
-    (_, symbol, _, _, _) = db.find_asset_by_id(asset_id)
+def fetch_analysts_comments(symbol: str) -> list[str]:
     symbol = symbol.split(".")[0]
 
     r = requests.get(f"https://finance.naver.com/research/company_list.naver?searchType=itemCode&itemCode={symbol}")

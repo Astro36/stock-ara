@@ -5,8 +5,8 @@ from stock_ainalyst.llm import openai
 
 
 def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]:
-    if (res := db.find_company_by_asset_id(asset_id)) is not None:
-        (_, _, _, _, _, business_raw) = res
+    if (stock := db.find_stock_by_id(asset_id)) is not None:
+        business_raw = stock[7]
         business_summary = prompt.create_business_summary_from_query(business_query, business_raw)
         answer = openai.request_gpt_answer(
             [
@@ -21,9 +21,9 @@ def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]
     return (False, None)
 
 
-def summarize_company_business(asset_id: int) -> str:
-    if (res := db.find_company_by_asset_id(asset_id)) is not None:
-        (_, _, _, _, _, business_raw) = res
+def summarize_company_business(stock) -> str:
+    business_raw = stock[7]
+    if business_raw is not None:
         business_summary = openai.request_gpt_answer(
             [
                 "Read the given business report excerpt and summarize it in an English sentence of 300 characters or less, focusing on the company's specific business details that can distinguish it from other companies, such as product name and sales proportion. Don't write about market and company forecasts.",
@@ -35,8 +35,9 @@ def summarize_company_business(asset_id: int) -> str:
     return None
 
 
-def summarize_analysts_comments(asset_id: int) -> str:
-    comments = naver.fetch_analysts_comments(asset_id)
+def summarize_analysts_comments(stock) -> str:
+    symbol = stock[2]
+    comments = naver.fetch_analysts_comments(symbol)
     if len(comments) >= 1:
         answer = openai.request_gpt_answer(
             [
