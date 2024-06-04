@@ -13,12 +13,14 @@ opendartreader = "^0.2.3"
 pandas = "^2.2.2"
 pgvector = "^0.2.5"
 psycopg = {extras = ["binary"], version = "^3.1.19"}
-python-dotenv = "^1.0.1"
 python-telegram-bot = "^21.2"
 redis = "^5.0.4"
 requests = "^2.32.3"
 translators = "^5.9.2"
 yfinance = "^0.2.40"
+
+[tool.poetry.group.dev.dependencies]
+python-dotenv = "^1.0.1"
 
 [tool.black]
 line-length = 200

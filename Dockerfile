@@ -16,4 +16,6 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY . /code/
 
+RUN python -m scripts.prepare_expected_return
+
 # CMD ["python", "-m", "stock_ainalyst.bot"]

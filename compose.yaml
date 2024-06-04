@@ -6,6 +6,13 @@ services:
       - redis
     env_file:
       - .env
+    environment:
+      - POSTGRES_DB=${APP_ID}
+      - POSTGRES_USER=${APP_ID}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - OPENAI_API_KEY={OPENAI_API_KEY}
+      - OPENDART_API_KEY={OPENDART_API_KEY}
+      - TELEGRAM_BOT_TOKEN={TELEGRAM_BOT_TOKEN}
 
   db:
     build:
@@ -13,16 +20,14 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_USER=${APP_ID}
       - POSTGRES_DB=${APP_ID}
+      - POSTGRES_USER=${APP_ID}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
-    secrets:
-      - db-password
     restart: always
 
   redis:
