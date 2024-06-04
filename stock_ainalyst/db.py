@@ -1,9 +1,10 @@
 import pandas as pd
 from pgvector.psycopg import register_vector
 import psycopg
+import os
 
 
-conn = psycopg.connect("dbname=demo user=demo password=qwer")
+conn = psycopg.connect(f"dbname={os.getenv('POSTGRES_DB')} user={os.getenv('POSTGRES_USER')} password={os.getenv('POSTGRES_PASSWORD')}")
 register_vector(conn)
 
 
@@ -67,7 +68,7 @@ def find_stock_by_name(name: str) -> tuple[int, str, int, int, str, str]:
         return res
 
 
-def find_stocks_by_business(embedding: list[float], limit=5) -> list[int]:
+def find_stocks_by_business(embedding: list[float], limit=5, offset=0) -> list[int]:
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -83,10 +84,11 @@ def find_stocks_by_business(embedding: list[float], limit=5) -> list[int]:
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
+            WHERE business_summary IS NOT NULL
             ORDER BY business_embedding <-> %s
-            LIMIT %s;
+            LIMIT %s OFFSET %s;
             """,
-            (str(embedding), limit),
+            (str(embedding), limit, offset),
         )
         res = cur.fetchall()
         return res
@@ -124,7 +126,8 @@ def find_stocks_by_weekly_return_correlation(asset_id, limit=5) -> list[int]:
             FROM asset_weekly_return_correlations ac
                 JOIN assets a ON a.id = ac.asset_id
                 JOIN asset_stocks s ON s.asset_id = ac.asset_id
-                JOIN companies c ON c.id = s.company_id;
+                JOIN companies c ON c.id = s.company_id
+            WHERE business_summary IS NOT NULL;
             """,
             (asset_id, limit + 1),
         )

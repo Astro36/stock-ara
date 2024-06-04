@@ -1,6 +1,5 @@
 import glob
 import os
-import pandas as pd
 from pgvector.psycopg import register_vector
 import psycopg
 import re

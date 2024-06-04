@@ -23,27 +23,31 @@ def find_companies_by_business(query: str) -> tuple[str, list[tuple[str, str]]]:
 
     with mp.Pool(10) as p:
         q = mp.Queue()
-        for stock in db.find_stocks_by_business(business_embedding):
-            asset_id = stock[0]
-            q.put(asset_id)
+        search_offset = 0
 
-        while not q.empty():
-            x = []
-            for _ in range(10):
-                if not q.empty():
-                    x.append((q.get(), business_query))
-            result = p.map(fn, x)
-            checked_asset_ids.update([asset_id for asset_id, _ in x])
+        while True:
+            for stock in db.find_stocks_by_business(business_embedding, offset=search_offset):
+                asset_id = stock[0]
+                q.put(asset_id)
+            search_offset += 5
 
-            for idx, (relevant, reason) in enumerate(result):
-                if relevant:
-                    answers.append((asset_id, papago.translate(reason)))
-                    asset_id, _ = x[idx]
+            if not q.empty():
+                x = []
+                for _ in range(10):
+                    if not q.empty():
+                        x.append((q.get(), business_query))
+                result = p.map(fn, x)
+                checked_asset_ids.update([asset_id for asset_id, _ in x])
 
-                    for stock2 in db.find_stocks_by_weekly_return_correlation(asset_id):
-                        asset_id2 = stock2[0]
-                        if asset_id2 not in checked_asset_ids:
-                            q.put(asset_id2)
+                for idx, (relevant, reason) in enumerate(result):
+                    if relevant:
+                        asset_id, _ = x[idx]
+                        answers.append((asset_id, papago.translate(reason)))
+
+                        for stock2 in db.find_stocks_by_weekly_return_correlation(asset_id):
+                            asset_id2 = stock2[0]
+                            if asset_id2 not in checked_asset_ids:
+                                q.put(asset_id2)
 
             if len(answers) >= 5 or len(checked_asset_ids) >= 25:
                 break
@@ -59,6 +63,6 @@ def analyze_stock(stock_name):
     asset_id = stock[0]
     capm_expected_return = float(r.get(f"capm_expected_return:asset_id#{asset_id}"))
     implied_expected_return = float(r.get(f"implied_expected_return:asset_id#{asset_id}"))
-    
+
     symbol = stock[2]
     return (symbol, stock_name, business_summary, comment, capm_expected_return, implied_expected_return)

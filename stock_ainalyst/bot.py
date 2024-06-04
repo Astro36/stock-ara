@@ -79,6 +79,6 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("business", search_stock_by_business))  # 종목명, 선정이유
     # app.add_handler(CommandHandler("keyword", search_stock_by_keyword)) # 종목명, 선정이유
-    app.add_handler(CommandHandler("analyze", analyze_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
+    app.add_handler(CommandHandler("stock", analyze_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
     # app.add_handler(CommandHandler("portfolio", make_portfolio)) # 기대수익률, 포트폴리오
     app.run_polling(allowed_updates=Update.ALL_TYPES)
