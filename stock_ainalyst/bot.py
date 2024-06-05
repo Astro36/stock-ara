@@ -45,14 +45,23 @@ async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT
         await update.message.reply_text("<code>/business 반도체 장비 회사</code>와 같이 찾으려는 기업이 영위하는 사업을 알려주세요.", parse_mode="HTML")
 
 
-# async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     user_id = update.message.from_user.id
-#     keyword = update.message.text.replace("/keyword", "").strip()
+async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    keyword = update.message.text.replace("/keyword", "").strip()
 
-#     if keyword:
-#         pass
-#     else:
-#         await update.message.reply_text("<code>/keyword 반도체</code>와 같이 사업보고서에서 찾으려는 단어를 알려주세요.", parse_mode="HTML")
+    if keyword and len(keyword) >= 2:
+        answers = command.search_stock_by_keyword(keyword)
+        if len(answers) > 0:
+            answer = []
+            for asset_id, wheres in answers:
+                (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
+                answer.append(f"<b>{name}({symbol})</b>\n<blockquote expandable>" + "\n\n".join([where for where in wheres]) + "</blockquote>")
+            answer = "\n\n".join(answer)
+            await reply_text(update, f"<i>{keyword}</i>에 대한 검색 결과입니다.\n\n{answer}")
+        else:
+            await update.message.reply_text(f"검색 결과가 존재하지 않습니다.", parse_mode="HTML")
+    else:
+        await update.message.reply_text("<code>/keyword 웨이퍼</code>와 같이 사업보고서에서 찾으려는 단어를 알려주세요.", parse_mode="HTML")
 
 
 async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -75,7 +84,7 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    stock_names = list(map(lambda x: x.strip(), update.message.text.replace("/portfolio", "").split(',')))
+    stock_names = list(map(lambda x: x.strip(), update.message.text.replace("/portfolio", "").split(",")))
 
     if len(stock_names) >= 2:
         try:
@@ -83,7 +92,9 @@ async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
             answer = []
             for asset_id, weight, expected_return, volatility in sorted(portfolio_weights, key=lambda x: x[1], reverse=True):
                 (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(f"<b>{name}({symbol})</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%")
+                answer.append(
+                    f"<b>{name}({symbol})</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%"
+                )
             answer = "\n\n".join(answer)
             await reply_text(update, f"마코위츠의 평균-분산 모형을 이용해 최적화된 포트폴리오입니다.\n\n{answer}\n\n종목간 상관계수에 따라 편입되지 않는 종목이 발생할 수 있습니다.")
         except:
@@ -96,7 +107,7 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("business", search_stock_by_business))  # 종목명, 선정이유
-    # app.add_handler(CommandHandler("keyword", search_stock_by_keyword)) # 종목명, 선정이유
+    app.add_handler(CommandHandler("keyword", search_stock_by_keyword))  # 종목명, 선정이유
     app.add_handler(CommandHandler("stock", analyze_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
-    app.add_handler(CommandHandler("portfolio", make_portfolio)) # 기대수익률, 포트폴리오
+    app.add_handler(CommandHandler("portfolio", make_portfolio))  # 기대수익률, 포트폴리오
     app.run_polling(allowed_updates=Update.ALL_TYPES)

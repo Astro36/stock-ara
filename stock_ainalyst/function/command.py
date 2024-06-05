@@ -3,6 +3,7 @@ import redis
 import math
 import multiprocessing as mp
 import pandas as pd
+import re
 from stock_ainalyst import db
 from stock_ainalyst.function import prompt, rag
 from stock_ainalyst.llm import openai, papago
@@ -58,6 +59,29 @@ def find_companies_by_business(query: str) -> tuple[str, list[tuple[str, str]]]:
     return (business_query, answers)
 
 
+def search_stock_by_keyword(keyword: str):
+    stocks = db.find_stocks_by_keyword(keyword)
+
+    answers = []
+    for stock in stocks:
+        asset_id = stock[0]
+        business_raw = stock[7]
+        wheres = []
+        for m in re.finditer(keyword, business_raw):
+            start_idx = max(0, m.start() - 25)
+            end_idx = min(len(business_raw), m.end() + 25)
+            content = business_raw[start_idx:end_idx]
+            if start_idx > 0:
+                content = "…" + content
+            if end_idx < len(business_raw) - 1:
+                content += "…"
+            wheres.append(content)
+            if len(wheres) >= 5:
+                break
+        answers.append((asset_id, wheres))
+    return answers
+
+
 def analyze_stock(stock_name):
     stock = db.find_stock_by_name(stock_name)
     business_summary = papago.translate(rag.summarize_company_business(stock))
@@ -85,5 +109,5 @@ def make_portfolio(stock_names):
     prob = cp.Problem(cp.Maximize(portfolio_return - portfolio_risk), [cp.sum(portfolio_weights) == 1, portfolio_weights >= 0])
     prob.solve()
 
-    portfolio_weights = [(asset_ids[idx], weight, asset_expected_returns[idx], math.sqrt(asset_covs.iloc[idx,idx])) for idx, weight in enumerate(portfolio_weights.value)]
+    portfolio_weights = [(asset_ids[idx], weight, asset_expected_returns[idx], math.sqrt(asset_covs.iloc[idx, idx])) for idx, weight in enumerate(portfolio_weights.value)]
     return portfolio_weights

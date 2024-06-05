@@ -5,6 +5,7 @@ import os
 
 
 conn = psycopg.connect(f"dbname={os.getenv('POSTGRES_DB')} user={os.getenv('POSTGRES_USER')} password={os.getenv('POSTGRES_PASSWORD')}")
+# conn = psycopg.connect(f"host=db dbname={os.getenv('POSTGRES_DB')} user={os.getenv('POSTGRES_USER')} password={os.getenv('POSTGRES_PASSWORD')}")
 register_vector(conn)
 
 
@@ -65,6 +66,32 @@ def find_stock_by_name(name: str) -> tuple[int, str, int, int, str, str]:
             (name,),
         )
         res = cur.fetchone()
+        return res
+
+
+def find_stocks_by_keyword(keyword: str, limit=10, offset=0) -> list[int]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                a.id,
+                a.name,
+                symbol,
+                exchange,
+                currency,
+                outstanding_shares,
+                business_summary,
+                business_raw
+            FROM assets a
+                JOIN asset_stocks s ON s.asset_id = a.id
+                JOIN companies c ON c.id = s.company_id
+            WHERE business_raw LIKE %s
+            ORDER by a.id
+            LIMIT %s OFFSET %s;
+            """,
+            (f"%{keyword}%", limit, offset),
+        )
+        res = cur.fetchall()
         return res
 
 
