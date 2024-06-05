@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-
 load_dotenv()
 
 
@@ -58,7 +57,7 @@ async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT
 
 async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    stock_name = update.message.text.replace("/analyze", "").strip()
+    stock_name = update.message.text.replace("/stock", "").strip()
 
     if stock_name:
         await update.message.reply_text("애널리스트 리포트를 조회하고 있습니다. 잠시만 기다려주세요.")
@@ -71,7 +70,26 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             await update.message.reply_text("종목을 찾을 수 없습니다.", parse_mode="HTML")
     else:
-        await update.message.reply_text("<code>/analyze 삼성전자</code>와 같이 분석하려는 종목을 알려주세요.", parse_mode="HTML")
+        await update.message.reply_text("<code>/stock 삼성전자</code>와 같이 분석하려는 종목을 알려주세요.", parse_mode="HTML")
+
+
+async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    stock_names = list(map(lambda x: x.strip(), update.message.text.replace("/portfolio", "").split(',')))
+
+    if len(stock_names) >= 2:
+        try:
+            portfolio_weights = command.make_portfolio(stock_names)
+            answer = []
+            for asset_id, weight, expected_return, volatility in sorted(portfolio_weights, key=lambda x: x[1], reverse=True):
+                (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
+                answer.append(f"<b>{name}({symbol})</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%")
+            answer = "\n\n".join(answer)
+            await reply_text(update, f"마코위츠의 평균-분산 모형을 이용해 최적화된 포트폴리오입니다.\n\n{answer}\n\n종목간 상관계수에 따라 편입되지 않는 종목이 발생할 수 있습니다.")
+        except:
+            await update.message.reply_text("일부 종목을 찾을 수 없습니다.", parse_mode="HTML")
+    else:
+        await update.message.reply_text("<code>/portfolio 삼성전자,SK하이닉스,한미반도체</code>와 같이 포트폴리오를 구성하는 종목을 알려주세요.", parse_mode="HTML")
 
 
 if __name__ == "__main__":
@@ -80,5 +98,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("business", search_stock_by_business))  # 종목명, 선정이유
     # app.add_handler(CommandHandler("keyword", search_stock_by_keyword)) # 종목명, 선정이유
     app.add_handler(CommandHandler("stock", analyze_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
-    # app.add_handler(CommandHandler("portfolio", make_portfolio)) # 기대수익률, 포트폴리오
+    app.add_handler(CommandHandler("portfolio", make_portfolio)) # 기대수익률, 포트폴리오
     app.run_polling(allowed_updates=Update.ALL_TYPES)

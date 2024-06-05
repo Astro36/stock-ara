@@ -8,6 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+cvxpy = "^1.5.1"
 openai = "^1.31.0"
 opendartreader = "^0.2.3"
 pandas = "^2.2.2"

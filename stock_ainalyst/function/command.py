@@ -1,5 +1,8 @@
+import cvxpy as cp
 import redis
+import math
 import multiprocessing as mp
+import pandas as pd
 from stock_ainalyst import db
 from stock_ainalyst.function import prompt, rag
 from stock_ainalyst.llm import openai, papago
@@ -66,3 +69,21 @@ def analyze_stock(stock_name):
 
     symbol = stock[2]
     return (symbol, stock_name, business_summary, comment, capm_expected_return, implied_expected_return)
+
+
+def make_portfolio(stock_names):
+    asset_ids = [db.find_stock_by_name(name)[0] for name in stock_names]
+    asset_prices = pd.concat([db.find_weekly_close_prices_by_id(asset_id) for asset_id in asset_ids], axis=1)
+    asset_returns = asset_prices.pct_change(fill_method=None).dropna(how="all")
+    asset_covs = asset_returns.cov().fillna(0) * 52
+    asset_expected_returns = pd.Series([float(r.get(f"implied_expected_return:asset_id#{asset_id}")) for asset_id in asset_ids], index=asset_ids, dtype=float)
+    asset_expected_returns = asset_expected_returns.to_numpy()
+
+    portfolio_weights = cp.Variable(len(asset_ids))
+    portfolio_return = asset_expected_returns.T @ portfolio_weights
+    portfolio_risk = cp.quad_form(portfolio_weights, asset_covs)
+    prob = cp.Problem(cp.Maximize(portfolio_return - portfolio_risk), [cp.sum(portfolio_weights) == 1, portfolio_weights >= 0])
+    prob.solve()
+
+    portfolio_weights = [(asset_ids[idx], weight, asset_expected_returns[idx], math.sqrt(asset_covs.iloc[idx,idx])) for idx, weight in enumerate(portfolio_weights.value)]
+    return portfolio_weights
