@@ -5,7 +5,7 @@ CREATE TABLE companies (
     business_raw       text,
     business_embedding vector(1536)
 );
-CREATE INDEX ix_company_name ON companies (name);
+CREATE INDEX company_name_idx ON companies (name);
 
 CREATE TABLE assets (
     id       serial                PRIMARY KEY,
@@ -14,16 +14,17 @@ CREATE TABLE assets (
     exchange character varying(10) NOT NULL,
     currency character(3)          NOT NULL
 );
-CREATE INDEX ix_asset_name ON assets (name);
-CREATE UNIQUE INDEX ix_asset_symbol ON assets (symbol);
-CREATE INDEX ix_asset_exchange ON assets (exchange);
+CREATE INDEX asset_name_idx ON assets (name);
+CREATE UNIQUE INDEX asset_symbol_idx ON assets (symbol);
+CREATE INDEX asset_exchange_idx ON assets (exchange);
 
 CREATE TABLE asset_stocks (
     asset_id           integer REFERENCES assets,
     company_id         integer REFERENCES companies,
     outstanding_shares bigint,
-    PRIMARY KEY(company_id, asset_id)
+    PRIMARY KEY(asset_id, company_id)
 );
+CREATE INDEX asset_stocks_company_id_idx ON asset_stocks (company_id);
 
 CREATE TABLE asset_prices (
     date     date           NOT NULL,
@@ -35,13 +36,27 @@ CREATE TABLE asset_prices (
     volume   integer        NOT NULL
 );
 SELECT create_hypertable('asset_prices', by_range('date'));
-CREATE UNIQUE INDEX ix_asset_price ON asset_prices (asset_id, date);
+CREATE UNIQUE INDEX asset_price_idx ON asset_prices (asset_id, date);
 
-CREATE MATERIALIZED VIEW asset_weekly_close_prices WITH (timescaledb.continuous) AS (
-    SELECT
-        time_bucket('1 week'::interval, date) AS week,
-        asset_id,
-        last(close, date) AS close
-    FROM asset_prices
-    GROUP BY week, asset_id
-);
+CREATE MATERIALIZED VIEW asset_weekly_close_prices WITH (timescaledb.continuous) AS
+SELECT
+    time_bucket('1 week'::interval, date) AS week,
+    asset_id,
+    last(close, date) AS close
+FROM asset_prices
+GROUP BY week, asset_id;
+
+CREATE VIEW asset_last_prices AS
+SELECT
+    asset_id,
+    last(close, week) AS close
+FROM asset_weekly_close_prices
+GROUP BY asset_id;
+
+CREATE MATERIALIZED VIEW stock_market_caps AS
+SELECT
+    s.asset_id AS asset_id,
+    close * outstanding_shares AS market_cap
+FROM asset_stocks s
+    JOIN asset_last_prices p on p.asset_id = s.asset_id;
+CREATE UNIQUE INDEX stock_market_caps_asset_id_idx ON stock_market_caps (asset_id);
