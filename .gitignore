@@ -173,4 +173,5 @@ pyrightconfig.json
 ### Data ###
 data/
 docs_cache/
-db/password.txt
+db_data/
+db_data.*

@@ -55,9 +55,9 @@ async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_
             answer = []
             for asset_id, wheres in answers:
                 (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(f"<b>{name}({symbol})</b>\n<blockquote expandable>" + "\n\n".join([where for where in wheres]) + "</blockquote>")
+                answer.append(f"<b>{name}({symbol})</b>\n" + "\n".join([f"[{i}] {where.replace(keyword, f'<u>{keyword}</u>') }" for i, where in enumerate(wheres)]))
             answer = "\n\n".join(answer)
-            await reply_text(update, f"<i>{keyword}</i>에 대한 검색 결과입니다.\n\n{answer}")
+            await reply_text(update, f"<i>Keyword: {keyword}</i>\n\n{answer}")
         else:
             await update.message.reply_text(f"검색 결과가 존재하지 않습니다.", parse_mode="HTML")
     else:
@@ -74,7 +74,7 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             (symbol, stock_name, business_summary, comment, capm_expected_return, implied_expected_return) = command.analyze_stock(stock_name)
             await reply_text(
                 update,
-                f"<b>{stock_name}({symbol})</b>\n{business_summary}\n<blockquote>{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%",
+                f"<b>{stock_name}({symbol})</b>\n{business_summary}\n<blockquote><b>애널리스트 코멘트</b>\n{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%",
             )
         except:
             await update.message.reply_text("종목을 찾을 수 없습니다.", parse_mode="HTML")

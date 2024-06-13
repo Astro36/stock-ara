@@ -69,7 +69,7 @@ def find_stock_by_name(name: str) -> tuple[int, str, int, int, str, str]:
         return res
 
 
-def find_stocks_by_keyword(keyword: str, limit=10, offset=0) -> list[int]:
+def find_stocks_by_keyword(keyword: str, limit=20, offset=0) -> list[int]:
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -84,9 +84,10 @@ def find_stocks_by_keyword(keyword: str, limit=10, offset=0) -> list[int]:
                 business_raw
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
+                JOIN stock_market_caps m ON m.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
             WHERE business_raw LIKE %s
-            ORDER by a.id
+            ORDER BY market_cap DESC
             LIMIT %s OFFSET %s;
             """,
             (f"%{keyword}%", limit, offset),
@@ -225,21 +226,12 @@ def find_market_caps_by_exchange(exchange="KOSPI"):
     with conn.cursor() as cur:
         cur.execute(
             """
-            WITH asset_last_prices AS (
-                SELECT
-                    p.asset_id,
-                    last(close, week) as close
-                FROM asset_weekly_close_prices p
-                    JOIN assets a ON a.id = p.asset_id
-                    JOIN asset_stocks s ON s.asset_id = a.id
-                WHERE week > now() - '1 year'::interval AND a.exchange = %s
-                GROUP BY p.asset_id
-            )
             SELECT
-                p.asset_id,
-                close * outstanding_shares AS market_cap
-            FROM asset_last_prices p
-                JOIN asset_stocks s ON s.asset_id = p.asset_id
+                asset_id,
+                market_cap
+            FROM stock_market_caps m
+                JOIN assets a ON a.id = m.asset_id
+            WHERE exchange = %s
             ORDER BY market_cap DESC;
             """,
             (exchange,),
