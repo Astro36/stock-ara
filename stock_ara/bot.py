@@ -3,8 +3,8 @@ load_dotenv()
 
 
 import os
-from stock_ainalyst import db
-from stock_ainalyst.function import command
+from stock_ara import db
+from stock_ara.function import command
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 

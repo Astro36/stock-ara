@@ -1,4 +1,4 @@
-from stock_ainalyst.llm import openai
+from stock_ara.llm import openai
 
 
 def create_business_query(query: str) -> str:

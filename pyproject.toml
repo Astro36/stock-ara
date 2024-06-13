@@ -1,6 +1,6 @@
 [tool.poetry]
 package-mode = false
-name = "stock-ainalyst"
+name = "stock-ara"
 version = "0.1.0"
 description = ""
 authors = ["Seungjae Park <astro.psj@gmail.com>"]

@@ -1,6 +1,6 @@
 import re
 import requests
-from stock_ainalyst import db
+from stock_ara import db
 
 
 def fetch_analysts_comments(symbol: str) -> list[str]:

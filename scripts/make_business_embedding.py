@@ -3,7 +3,7 @@ import os
 from pgvector.psycopg import register_vector
 import psycopg
 import re
-from stock_ainalyst.llm import openai
+from stock_ara.llm import openai
 
 
 conn = psycopg.connect("dbname=demo user=demo password=qwer")

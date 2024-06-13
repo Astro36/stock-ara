@@ -1,7 +1,7 @@
-from stock_ainalyst import db
-from stock_ainalyst.datasource import naver
-from stock_ainalyst.function import prompt
-from stock_ainalyst.llm import openai
+from stock_ara import db
+from stock_ara.datasource import naver
+from stock_ara.function import prompt
+from stock_ara.llm import openai
 
 
 def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]:

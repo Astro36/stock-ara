@@ -1,6 +1,6 @@
 import pandas as pd
 import redis
-from stock_ainalyst import db
+from stock_ara import db
 
 
 def calculate_betas(market, market_asset_id):

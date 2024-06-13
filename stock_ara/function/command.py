@@ -4,9 +4,9 @@ import math
 import multiprocessing as mp
 import pandas as pd
 import re
-from stock_ainalyst import db
-from stock_ainalyst.function import prompt, rag
-from stock_ainalyst.llm import openai, papago
+from stock_ara import db
+from stock_ara.function import prompt, rag
+from stock_ara.llm import openai, papago
 
 
 r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True, protocol=3)
