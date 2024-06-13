@@ -2,10 +2,14 @@ CREATE TABLE companies (
     id                 serial                PRIMARY KEY,
     name               character varying(20) NOT NULL,
     business_summary   text,
-    business_raw       text,
     business_embedding vector(1536)
 );
 CREATE INDEX company_name_idx ON companies (name);
+
+CREATE TABLE company_filings (
+    company_id integer PRIMARY KEY REFERENCES companies,
+    business   text
+);
 
 CREATE TABLE assets (
     id       serial                PRIMARY KEY,

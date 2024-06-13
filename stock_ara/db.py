@@ -31,10 +31,11 @@ def find_stock_by_id(asset_id: int) -> tuple[int, str, int, int, str, str]:
                 currency,
                 outstanding_shares,
                 business_summary,
-                business_raw
+                business
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
+                JOIN company_filings f ON f.company_id = s.company_id
             WHERE a.id = %s
             LIMIT 1;
             """,
@@ -56,10 +57,11 @@ def find_stock_by_name(name: str) -> tuple[int, str, int, int, str, str]:
                 currency,
                 outstanding_shares,
                 business_summary,
-                business_raw
+                business
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
+                JOIN company_filings f ON f.company_id = s.company_id
             WHERE a.name = %s
             LIMIT 1;
             """,
@@ -81,12 +83,13 @@ def find_stocks_by_keyword(keyword: str, limit=20, offset=0) -> list[int]:
                 currency,
                 outstanding_shares,
                 business_summary,
-                business_raw
+                business
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
-                JOIN stock_market_caps m ON m.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
-            WHERE business_raw LIKE %s
+                JOIN company_filings f ON f.company_id = s.company_id
+                JOIN stock_market_caps m ON m.asset_id = a.id
+            WHERE business LIKE %s
             ORDER BY market_cap DESC
             LIMIT %s OFFSET %s;
             """,
@@ -108,10 +111,11 @@ def find_stocks_by_business(embedding: list[float], limit=5, offset=0) -> list[i
                 currency,
                 outstanding_shares,
                 business_summary,
-                business_raw
+                business
             FROM assets a
                 JOIN asset_stocks s ON s.asset_id = a.id
                 JOIN companies c ON c.id = s.company_id
+                JOIN company_filings f ON f.company_id = s.company_id
             WHERE business_summary IS NOT NULL
             ORDER BY business_embedding <-> %s
             LIMIT %s OFFSET %s;
@@ -150,11 +154,12 @@ def find_stocks_by_weekly_return_correlation(asset_id, limit=5) -> list[int]:
                 currency,
                 outstanding_shares,
                 business_summary,
-                business_raw
+                business
             FROM asset_weekly_return_correlations ac
                 JOIN assets a ON a.id = ac.asset_id
                 JOIN asset_stocks s ON s.asset_id = ac.asset_id
                 JOIN companies c ON c.id = s.company_id
+                JOIN company_filings f ON f.company_id = s.company_id
             WHERE business_summary IS NOT NULL;
             """,
             (asset_id, limit + 1),

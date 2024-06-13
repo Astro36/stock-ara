@@ -55,11 +55,11 @@ async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_
             answer = []
             for asset_id, wheres in answers:
                 (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(f"<b>{name}({symbol})</b>\n" + "\n".join([f"[{i}] {where.replace(keyword, f'<u>{keyword}</u>') }" for i, where in enumerate(wheres)]))
+                answer.append(f"<b>{name}({symbol})</b>\n" + "\n".join([f"[{i+1}] {where.replace(keyword, f'<u>{keyword}</u>') }" for i, where in enumerate(wheres)]))
             answer = "\n\n".join(answer)
             await reply_text(update, f"<i>Keyword: {keyword}</i>\n\n{answer}")
         else:
-            await update.message.reply_text(f"검색 결과가 존재하지 않습니다.", parse_mode="HTML")
+            await update.message.reply_text(f"검색결과가 존재하지 않습니다.", parse_mode="HTML")
     else:
         await update.message.reply_text("<code>/keyword 웨이퍼</code>와 같이 사업보고서에서 찾으려는 단어를 알려주세요.", parse_mode="HTML")
 
@@ -96,7 +96,7 @@ async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"<b>{name}({symbol})</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%"
                 )
             answer = "\n\n".join(answer)
-            await reply_text(update, f"마코위츠의 평균-분산 모형을 이용해 최적화된 포트폴리오입니다.\n\n{answer}\n\n종목간 상관계수에 따라 편입되지 않는 종목이 발생할 수 있습니다.")
+            await reply_text(update, f"{answer}\n\n평균-분산 모형으로 최적화된 포트폴리오입니다. 종목간 상관계수에 따라 편입되지 않는 종목이 발생할 수 있습니다.")
         except:
             await update.message.reply_text("일부 종목을 찾을 수 없습니다.", parse_mode="HTML")
     else:

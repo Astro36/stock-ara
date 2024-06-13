@@ -72,7 +72,7 @@ def search_stock_by_keyword(keyword: str):
             end_idx = min(len(business_raw), m.end() + 25)
             content = business_raw[start_idx:end_idx]
             wheres.append(content.replace('\n', ' '))
-            if len(wheres) >= 10:
+            if len(wheres) >= 5:
                 break
         answers.append((asset_id, wheres))
     return answers
