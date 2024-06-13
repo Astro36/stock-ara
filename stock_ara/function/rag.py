@@ -41,7 +41,7 @@ def summarize_analysts_comments(stock) -> str:
     if len(comments) >= 1:
         answer = openai.request_gpt_answer(
             [
-                "Summarize information about the current status of the company in 200 characters or less.",
+                "Based on the given content, summarize the company's positive and negative outlook in in English sentences 400 characters or less. Do not output results in list format.",
                 "\n\n".join(comments)[:1000],
             ],
         )
