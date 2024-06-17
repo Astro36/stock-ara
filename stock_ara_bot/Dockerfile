@@ -18,4 +18,4 @@ COPY . /code/
 
 RUN python -m scripts.prepare_expected_return
 
-# CMD ["python", "-m", "stock_ara.bot"]
+CMD ["python", "-m", "stock_ara_bot.main"]

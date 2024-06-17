@@ -1,0 +1,17 @@
+[tool.poetry]
+package-mode = false
+name = "stock-ara-bot"
+version = "0.1.0"
+description = ""
+authors = ["Seungjae Park <astro.psj@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-dotenv = "^1.0.1"
+python-telegram-bot = "^21.2"
+stock-ara = {path = "../stock_ara"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
