@@ -1,7 +1,5 @@
 from dotenv import load_dotenv
-
 load_dotenv()
-
 
 import os
 from stock_ara.function import command

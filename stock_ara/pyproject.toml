@@ -1,5 +1,4 @@
 [tool.poetry]
-package-mode = false
 name = "stock-ara"
 version = "0.1.0"
 description = ""
@@ -9,19 +8,16 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 cvxpy = "^1.5.1"
+numpy = "^1.26.4"
 openai = "^1.31.0"
 opendartreader = "^0.2.3"
 pandas = "^2.2.2"
 pgvector = "^0.2.5"
 psycopg = {extras = ["binary"], version = "^3.1.19"}
-python-telegram-bot = "^21.2"
-redis = "^5.0.4"
+redis = "^5.0.6"
 requests = "^2.32.3"
 translators = "^5.9.2"
 yfinance = "^0.2.40"
-
-[tool.poetry.group.dev.dependencies]
-python-dotenv = "^1.0.1"
 
 [tool.black]
 line-length = 200
