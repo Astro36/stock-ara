@@ -1,22 +1,5 @@
-from dataclasses import dataclass
 from psycopg import Connection
-
-
-@dataclass(frozen=True)
-class Asset:
-    id: int
-    name: str
-    symbol: str
-    exchange: str
-    currency: str
-
-    def __str__(self) -> str:
-        return f"{self.name}({self.symbol})"
-
-
-@dataclass(frozen=True)
-class Stock(Asset):
-    company_id: int
+from stock_ara.domain.stock import Stock
 
 
 class StockRepository:
