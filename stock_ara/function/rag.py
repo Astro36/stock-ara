@@ -1,13 +1,12 @@
-from stock_ara import db
 from stock_ara.datasource import naver
 from stock_ara.function import prompt
 from stock_ara.llm import openai
+from stock_ara.db import company_repository
 
 
 def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]:
-    if (stock := db.find_stock_by_id(asset_id)) is not None:
-        business_raw = stock[7]
-        business_summary = prompt.create_business_summary_from_query(business_query, business_raw)
+    if (company := company_repository.find_by_stock_id(asset_id)) is not None:
+        business_summary = prompt.create_business_summary_from_query(business_query, company.business_raw)
         answer = openai.request_gpt_answer(
             [
                 'You are a corporate analyst. Read the given business report summary and answer "True" or "False" whether the business this company does is relevant to the given query.',
@@ -21,8 +20,7 @@ def is_relevant_business(asset_id: int, business_query: str) -> tuple[bool, str]
     return (False, None)
 
 
-def summarize_company_business(stock) -> str:
-    business_raw = stock[7]
+def summarize_company_business(business_raw: str) -> str:
     if business_raw is not None:
         business_summary = openai.request_gpt_answer(
             [
@@ -35,9 +33,8 @@ def summarize_company_business(stock) -> str:
     return None
 
 
-def summarize_analysts_comments(stock) -> str:
-    symbol = stock[2]
-    comments = naver.fetch_analysts_comments(symbol)
+def summarize_analysts_comments(stock_symbol: str) -> str:
+    comments = naver.fetch_analysts_comments(stock_symbol)
     if len(comments) >= 1:
         answer = openai.request_gpt_answer(
             [
