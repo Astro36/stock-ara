@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 import os
-from stock_ara import db
 from stock_ara.function import command
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -34,9 +34,8 @@ async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT
         (business_query, answers) = command.find_companies_by_business(query)
         if len(answers) > 0:
             answer = []
-            for asset_id, reason in answers:
-                (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(f"<b>{name}({symbol})</b>\n{reason}")
+            for stock, reason in answers:
+                answer.append(f"<b>{stock}</b>\n{reason}")
             answer = "\n\n".join(answer)
             await reply_text(update, f"<i>Query: {business_query}</i>\n\n{answer}\n\n검색결과가 만족스럽지 않다면 영어로 검색해주세요.")
         else:
@@ -53,9 +52,8 @@ async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_
         answers = command.search_stock_by_keyword(keyword)
         if len(answers) > 0:
             answer = []
-            for asset_id, wheres in answers:
-                (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(f"<b>{name}({symbol})</b>\n" + "\n".join([f"[{i+1}] {where.replace(keyword, f'<u>{keyword}</u>') }" for i, where in enumerate(wheres)]))
+            for stock, wheres in answers:
+                answer.append(f"<b>{stock}</b>\n" + "\n".join([f"[{i+1}] {where.replace(keyword, f'<u>{keyword}</u>') }" for i, where in enumerate(wheres)]))
             answer = "\n\n".join(answer)
             await reply_text(update, f"<i>Keyword: {keyword}</i>\n\n{answer}")
         else:
@@ -71,10 +69,10 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if stock_name:
         await update.message.reply_text("애널리스트 리포트를 조회하고 있습니다. 잠시만 기다려주세요.")
         try:
-            (symbol, stock_name, business_summary, comment, capm_expected_return, implied_expected_return) = command.analyze_stock(stock_name)
+            (stock, business_summary, comment, capm_expected_return, implied_expected_return) = command.analyze_stock(stock_name)
             await reply_text(
                 update,
-                f"<b>{stock_name}({symbol})</b>\n{business_summary}\n<blockquote><b>애널리스트 코멘트</b>\n{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%",
+                f"<b>{stock}</b>\n{business_summary}\n<blockquote><b>애널리스트 코멘트</b>\n{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%",
             )
         except:
             await update.message.reply_text("종목을 찾을 수 없습니다.", parse_mode="HTML")
@@ -90,11 +88,8 @@ async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             portfolio_weights = command.make_portfolio(stock_names)
             answer = []
-            for asset_id, weight, expected_return, volatility in sorted(portfolio_weights, key=lambda x: x[1], reverse=True):
-                (_, name, symbol, _, _) = db.find_asset_by_id(asset_id)
-                answer.append(
-                    f"<b>{name}({symbol})</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%"
-                )
+            for stock, weight, expected_return, volatility in sorted(portfolio_weights, key=lambda x: x[1], reverse=True):
+                answer.append(f"<b>{stock}</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%")
             answer = "\n\n".join(answer)
             await reply_text(update, f"{answer}\n\n평균-분산 모형으로 최적화된 포트폴리오입니다. 종목간 상관계수에 따라 편입되지 않는 종목이 발생할 수 있습니다.")
         except:
