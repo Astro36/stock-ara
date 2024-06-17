@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from stock_ara.function import command
+from stock_ara_bot import command
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -29,7 +29,7 @@ async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT
     print(query)
     if query:
         await update.message.reply_text("사업보고서를 조회하고 있습니다. 잠시만 기다려주세요.")
-        (business_query, answers) = command.find_companies_by_business(query)
+        (business_query, answers) = command.search_stock_by_business(query)
         if len(answers) > 0:
             answer = []
             for stock, reason in answers:
@@ -60,14 +60,14 @@ async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_
         await update.message.reply_text("<code>/keyword 웨이퍼</code>와 같이 사업보고서에서 찾으려는 단어를 알려주세요.", parse_mode="HTML")
 
 
-async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def research_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     stock_name = update.message.text.replace("/stock", "").strip()
 
     if stock_name:
         await update.message.reply_text("애널리스트 리포트를 조회하고 있습니다. 잠시만 기다려주세요.")
         try:
-            (stock, business_summary, comment, capm_expected_return, implied_expected_return) = command.analyze_stock(stock_name)
+            (stock, business_summary, comment, capm_expected_return, implied_expected_return) = command.research_stock(stock_name)
             await reply_text(
                 update,
                 f"<b>{stock}</b>\n{business_summary}\n<blockquote><b>애널리스트 코멘트</b>\n{comment}</blockquote>\nCAPM 기대수익률: {capm_expected_return*100:.2f}%, 내재 기대수익률: {implied_expected_return*100:.2f}%",
@@ -78,13 +78,13 @@ async def analyze_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("<code>/stock 삼성전자</code>와 같이 분석하려는 종목을 알려주세요.", parse_mode="HTML")
 
 
-async def make_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def make_optimal_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     stock_names = list(map(lambda x: x.strip(), update.message.text.replace("/portfolio", "").split(",")))
 
     if len(stock_names) >= 2:
         try:
-            portfolio_weights = command.make_portfolio(stock_names)
+            portfolio_weights = command.make_optimal_portfolio(stock_names)
             answer = []
             for stock, weight, expected_return, volatility in sorted(portfolio_weights, key=lambda x: x[1], reverse=True):
                 answer.append(f"<b>{stock}</b>\n비중: {f'{weight*100:.2f}%' if weight >= 0.001 else '0% (편입하지 않음)'}\n내재 기대수익률: {expected_return*100:.2f}%, 52주 변동성: {volatility:.2f}%")
@@ -101,6 +101,6 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("business", search_stock_by_business))  # 종목명, 선정이유
     app.add_handler(CommandHandler("keyword", search_stock_by_keyword))  # 종목명, 선정이유
-    app.add_handler(CommandHandler("stock", analyze_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
-    app.add_handler(CommandHandler("portfolio", make_portfolio))  # 기대수익률, 포트폴리오
+    app.add_handler(CommandHandler("stock", research_stock))  # 종목명, 애널리스트 코멘트, 기대수익률
+    app.add_handler(CommandHandler("portfolio", make_optimal_portfolio))  # 기대수익률, 포트폴리오
     app.run_polling(allowed_updates=Update.ALL_TYPES)
