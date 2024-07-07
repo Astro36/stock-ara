@@ -21,6 +21,7 @@ class PortfolioManager:
                 (expected_returns - risk_free_rate).T @ weights == 1,
                 cp.sum(weights) == k,
                 k >= 0,
+                weights >= 0,
             ],
         )
         prob.solve()
