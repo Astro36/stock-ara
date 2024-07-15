@@ -1,9 +1,8 @@
 [tool.poetry]
 name = "stock-ara"
 version = "0.1.0"
-description = ""
+description = "Stock AI Research Assistant"
 authors = ["Seungjae Park <astro.psj@gmail.com>"]
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
