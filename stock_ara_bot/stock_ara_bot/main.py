@@ -3,6 +3,7 @@ load_dotenv()
 
 import os
 from stock_ara_bot import command
+from stock_ara.domain.stock.calculator import StockExpectedReturnManager
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -24,7 +25,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    # user_id = update.message.from_user.id
     query = update.message.text.replace("/business", "").strip()
     print(query)
     if query:
@@ -43,7 +44,7 @@ async def search_stock_by_business(update: Update, context: ContextTypes.DEFAULT
 
 
 async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    # user_id = update.message.from_user.id
     keyword = update.message.text.replace("/keyword", "").strip()
 
     if keyword and len(keyword) >= 2:
@@ -61,7 +62,7 @@ async def search_stock_by_keyword(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def research_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    # user_id = update.message.from_user.id
     stock_name = update.message.text.replace("/stock", "").strip()
 
     if stock_name:
@@ -79,7 +80,7 @@ async def research_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def make_optimal_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    # user_id = update.message.from_user.id
     stock_names = list(map(lambda x: x.strip(), update.message.text.replace("/portfolio", "").split(",")))
 
     if len(stock_names) >= 2:
@@ -97,6 +98,9 @@ async def make_optimal_portfolio(update: Update, context: ContextTypes.DEFAULT_T
 
 
 if __name__ == "__main__":
+    StockExpectedReturnManager().update()
+    print("Prepared expected returns for all stocks")
+
     app = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("business", search_stock_by_business))  # 종목명, 선정이유
