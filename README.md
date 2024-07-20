@@ -39,7 +39,7 @@ This is an official implementation of the paper: **A Novel Stock Screening Appro
 1. Clone the repository
 
     ```txt
-    $ git clone https://github.com/Astro36/stock-ara.git
+    git clone https://github.com/Astro36/stock-ara.git
     ```
 
 2. Set up the required environment variables: [.env](.env.example)
@@ -51,9 +51,20 @@ This is an official implementation of the paper: **A Novel Stock Screening Appro
    - `TELEGRAM_BOT_TOKEN`: see [Telegram BotFather](https://t.me/botfather)
 
 3. Load stock data and business reports into the database
-4. Update stock price data
-5. Run docker compose
+
+    ```sql
+    COPY companies FROM '/tmp/db_data/companies.csv' DELIMITER ',' CSV HEADER;
+    COPY company_filings FROM '/tmp/db_data/company_filings.csv' DELIMITER ',' CSV HEADER;
+    COPY assets FROM '/tmp/db_data/assets.csv' DELIMITER ',' CSV HEADER;
+    COPY asset_stocks FROM '/tmp/db_data/asset_stocks.csv' DELIMITER ',' CSV HEADER;
+    COPY asset_prices FROM '/tmp/db_data/db_data/asset_prices.csv' DELIMITER ',' CSV HEADER;
+
+    CALL refresh_continuous_aggregate('asset_weekly_close_prices', '2020-01-01', '2024-12-31');
+    REFRESH MATERIALIZED VIEW stock_market_caps;
+    ```
+
+4. Run docker compose
 
     ```txt
-    $ docker compose up
+    docker compose up
     ```
